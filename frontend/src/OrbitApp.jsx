@@ -200,31 +200,54 @@ export default function App() {
   }
   async function moveTask(task, next) {
     if (busyMove.current.has(task._id)) return;
+    
     busyMove.current.add(task._id);
-    setData((d) => ({
-      ...d,
-      tasks: d.tasks.map((t) =>
-        t._id === task._id
+    
+    const previousStatus = task.status;
+    const previousCompletedAt = task.completedAt;
+
+    setData((current) => ({
+      ...current,
+      tasks: current.tasks.map((item) =>
+        item._id === task._id
           ? {
-              ...t,
+              ...item,
               status: next,
-              completedAt: next === 'Done' ? new Date().toISOString() : null,
+              completedAt: 
+              next === 'Done' 
+               ? new Date().toISOString()
+               : null,
             }
-          : t,
+          : item,
       ),
     }));
     try {
       await mutate(
         '/tasks/' + task._id,
         'PATCH',
-        {
-          status: next,
-        },
-        next === 'Done' ? 'One more good thing, done.' : 'Task moved. Keep it flowing.',
+        { status: next },
+        next === 'Done' 
+        ?'One more good thing, done.'
+        :'Task moved. Keep it flowing.'
       );
-    } catch (e) {
-      await refresh();
-      showToast(e.message, true);
+    } catch (error) {
+      setData((current) => ({
+        ...current,
+        tasks: current.tasks.map((item) =>
+          item._id === task._id
+           ?{
+            ...item,
+            status: previousStatus,
+            completedAt: previousCompletedAt,
+           }
+           :item
+          ),
+        }));  
+      
+      showToast(
+        "Task move was not saved."+ error.message,
+        true
+      );
     } finally {
       busyMove.current.delete(task._id);
     }
