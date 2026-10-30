@@ -238,7 +238,7 @@ export default function App() {
            ?{
             ...item,
             status: previousStatus,
-            completedAt: previousCompletedAt,
+            completedAt: previousCompletedAt,  
            }
            :item
           ),
